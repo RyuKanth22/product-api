@@ -12,7 +12,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::group(['middleware' => ['jwt.auth']], function () {
     Route::apiResource('producto', ProductoController::class);
     Route::apiResource('divisa', DivisaController::class);
-    Route::get('producto/{id}/prices', [ProductosDivisaController::class, 'prices']);
-    Route::post('producto/{id}/prices', [ProductosDivisaController::class, 'storePrice']);
+    Route::get('producto/{id}/precios', [ProductosDivisaController::class, 'prices']);
+    Route::post('producto/{id}/precios', [ProductosDivisaController::class, 'storePrice']);
     Route::post('products/', [ProductoController::class, 'storePrice']);
 });

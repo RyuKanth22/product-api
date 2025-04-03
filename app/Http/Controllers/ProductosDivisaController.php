@@ -2,86 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StorePriceRequest;
-use App\Models\ProductosDivisa;
 use App\Http\Requests\StoreProductosDivisaRequest;
-use App\Http\Requests\UpdateProductosDivisaRequest;
+use App\Models\ProductosDivisa;
 use App\Models\Divisa;
 use App\Models\Producto;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Annotations as OA;
 
 class ProductosDivisaController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * @OA\Post(
+     *     path="/api/producto/{id}/precios",
+     *     summary="Crea un nuevo precio para un producto",
+     *     tags={"Productos"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID del producto",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"divisa_id", "price"},
+     *             @OA\Property(property="divisa_id", type="integer", example=1, description="ID de la divisa"),
+     *             @OA\Property(property="price", type="number", format="float", example=1200.5, description="Precio del producto en la divisa indicada")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Precio agregado con éxito",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Precio agregado")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error en el servidor"
+     *     )
+     * )
      */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreProductosDivisaRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(ProductosDivisa $productosDivisa)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(ProductosDivisa $productosDivisa)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateProductosDivisaRequest $request, ProductosDivisa $productosDivisa)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(ProductosDivisa $productosDivisa)
-    {
-        //
-    }
     public function storePrice(StoreProductosDivisaRequest $request, $id)
     {
-        try{
+        try {
             DB::beginTransaction();
-                $data = $request->validated();
-                $producto = Producto::find($id);
-                $divisa = Divisa::find($data['divisa_id']);
-                if(!isset($divisa))
-                    return response()->json('La divisa con id:'.$data['divisa_id']. " No existe", 201);
-                if(!isset($producto))
-                    return response()->json('El producto con id:'.$id. " No existe", 201);
-                $data['producto_id'] = intval($id);
-                ProductosDivisa::create($data);
+            $data = $request->validated();
+            $producto = Producto::find($id);
+            $divisa = Divisa::find($data['divisa_id']);
+            
+            if (!isset($divisa)) {
+                return response()->json('La divisa con id:'.$data['divisa_id']. " No existe", 201);
+            }
+            if (!isset($producto)) {
+                return response()->json('El producto con id:'.$id. " No existe", 201);
+            }
+
+            $data['producto_id'] = intval($id);
+            ProductosDivisa::create($data);
             DB::commit();
-                return response()->json('Precio agregado', 201);
+
+            return response()->json(['message' => 'Precio agregado'], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Error creando productos divisa',
@@ -90,6 +73,33 @@ class ProductosDivisaController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/producto/{id}/precios",
+     *     summary="Obtiene los precios de un producto en diferentes divisas",
+     *     tags={"Productos"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID del producto",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de precios por divisa",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="nombre", type="string", example="Laptop"),
+     *                 @OA\Property(property="divisa", type="string", example="USD"),
+     *                 @OA\Property(property="price", type="number", format="float", example=1200.5)
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function prices($id)
     {
         $producto = Producto::find($id);
@@ -101,6 +111,7 @@ class ProductosDivisaController extends Controller
                 'price' => $price->price,
             ];
         });
-        return response()->json($product, 201);
+
+        return response()->json($product, 200);
     }
 }
