@@ -10,7 +10,7 @@ class ProductosDivisa extends Model
     /** @use HasFactory<\Database\Factories\ProductosDivisaFactory> */
     use HasFactory;
 
-    protected $fillable = ['product_id', 'currency_id', 'price'];
+    protected $fillable = ['producto_id', 'divisa_id', 'price'];
 
     public function product()
     {

@@ -3,11 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class CreacionUsuarios extends Seeder
+class CreacionUsuarioSeeder extends Seeder
 {
     /**
      * Run the database seeds.

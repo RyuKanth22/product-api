@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
-use App\Models\ProductosDivisa;
-use Illuminate\Http\Request;
+use App\Models\Divisa;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class ProductoController extends Controller
@@ -34,12 +34,16 @@ class ProductoController extends Controller
     {
     try{
         DB::beginTransaction();
-        $producto = Producto::create($request->validated());
+            $data = $request->validated();
+            $divisa = Divisa::find($data['divisa_id']);
+            if(!isset($divisa))
+                return response()->json('La divisa con id:'.$data['divisa_id']. " No existe", 201);
+            $producto = Producto::create($data);
         DB::commit();
         return response()->json($producto, 201);
     }catch(\Exception $e){
         return response()->json([
-            'error' => 'Error creating product',
+            'error' => 'Error creando producto',
             'message' => $e->getMessage()
         ], 500);
     }
@@ -54,7 +58,7 @@ class ProductoController extends Controller
             return response()->json(Producto::find($id), 201);
         }catch(\Exception $e){
             return response()->json([
-                'error' => 'Error creating product',
+                'error' => 'Error mostrando producto',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -76,7 +80,7 @@ class ProductoController extends Controller
         try{
             DB::beginTransaction();
             $producto = Producto::find($id);
-            if (!$producto) {
+            if (!isset($producto)) {
                 return response()->json(['error' => 'Producto no encontrado'], 404);
             }
             $producto->update($request->all());
@@ -84,7 +88,7 @@ class ProductoController extends Controller
             return response()->json("producto modificado", 201);
         }catch(\Exception $e){
             return response()->json([
-                'error' => 'Error creating product',
+                'error' => 'Error actualizando producto',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -98,37 +102,22 @@ class ProductoController extends Controller
         try{
             DB::beginTransaction();
             $producto = Producto::find($id);
-            if (!$producto) {
+            if (!isset($producto)) {
                 return response()->json(['error' => 'Producto no encontrado'], 404);
             }
             $producto->delete();
             DB::commit();
             return response()->json("Producto: ".$producto->name." Eliminado", 201);
+        }catch (QueryException $e) {
+            return response()->json([
+                'error' => 'No se puede eliminar el producto porque está relacionado con otras tablas',
+                'message' => $e->getMessage(),
+            ], 422);
         }catch(\Exception $e){
             return response()->json([
-                'error' => 'Error creating product',
+                'error' => 'Error eliminando producto',
                 'message' => $e->getMessage()
             ], 500);
         }
-    }
-
-    public function prices($id)
-    {
-        $product = Producto::findOrFail($id);
-        return response()->json($product->prices);
-    }
-
-    public function storePrice(Request $request, $id)
-    {
-        $request->validate([
-            'divisa_id' => 'required|numeric',
-            'price' => 'required|numeric',
-        ]);
-
-        $product = Producto::findOrFail($id);
-        $productPrice = new ProductosDivisa($request->all());
-        $product->prices()->save($productPrice);
-
-        return response()->json($productPrice, 201);
     }
 }

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('productos_divisas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products');
+            $table->foreignId('producto_id')->constrained('productos');
             $table->foreignId('divisa_id')->constrained('divisas');
             $table->decimal('price', 10, 2);
             $table->timestamps();
